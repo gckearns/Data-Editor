@@ -4,51 +4,25 @@ using UnityEditor;
 
 public class MyGUILayout {
 
-    public static bool ToggleRow(GUIRow row)
+    public static bool Cell(bool value, GUICell cell)
     {
-        GUIStyle rowStyle = new GUIStyle("TableRow");
-        
-        rowStyle.normal = row.value ? rowStyle.onNormal : rowStyle.normal;
-        if (GUI.GetNameOfFocusedControl().Contains("row" + row.id))
-        {
-            rowStyle.normal = row.value ? rowStyle.onFocused: rowStyle.focused;
-        }
-        EditorGUILayout.BeginHorizontal(rowStyle);
-        for (int i = 0; i < row.texts.Length; i++)
-        {
-            GUI.SetNextControlName(("row" + row.id + i));
-            EditorGUI.BeginChangeCheck();
-            row.value = GUILayout.Toggle(row.value, row.texts[i], row.cellStyle, row.options[i].options);
-            if (EditorGUI.EndChangeCheck() && row.value)
-            {
-                GUI.FocusControl(("row" + row.id + i));
-                //row.isFocused = true;
-            }
-        }
-        EditorGUILayout.EndHorizontal();
-        return row.value;
+        Rect rect = GUILayoutUtility.GetRect(new GUIContent(cell.text), cell.toggleStyle, cell.options.options);
+        GUI.SetNextControlName(cell.controlName);
+        rect.width = rect.width + cell.toggleStyle.margin.right;
+        cell.isOn = EditorGUI.Toggle(rect, value, cell.toggleStyle);
+        //rect.x = rect.x + cell.toggleStyle.padding.left;
+        //rect.width = rect.width - cell.toggleStyle.padding.right;
+        string fittedText = MyGUILayoutUtility.FitTextToStyle(cell.text, cell.toggleStyle, rect.width);
+        EditorGUI.LabelField(rect, fittedText, cell.TextStyle);
+        return cell.isOn;
     }
 
-    public static void ShowRow(GUIRow row)
+    public static void Row(GUIRow row)
     {
-        GUIStyle rowStyle = new GUIStyle("TableRow");
-
-        rowStyle.normal = row.value ? rowStyle.onNormal : rowStyle.normal;
-        if (GUI.GetNameOfFocusedControl().Contains("row" + row.id))
+        EditorGUILayout.BeginHorizontal(row.Style);
+        for (int i = 0; i < row.cells.Length; i++)
         {
-            rowStyle.normal = row.value ? rowStyle.onFocused : rowStyle.focused;
-        }
-        EditorGUILayout.BeginHorizontal(rowStyle);
-        for (int i = 0; i < row.texts.Length; i++)
-        {
-            GUI.SetNextControlName(("row" + row.id + i));
-            EditorGUI.BeginChangeCheck();
-            row.value = GUILayout.Toggle(row.value, row.texts[i], row.cellStyle, row.options[i].options);
-            if (EditorGUI.EndChangeCheck())
-            {
-                GUI.FocusControl(("row" + row.id + i));
-                //row.isFocused = true;
-            }
+            row.isOn = Cell(row.isOn, row.cells[i]);
         }
         EditorGUILayout.EndHorizontal();
     }
@@ -91,13 +65,14 @@ public class MyGUILayout {
             }
         }
         EditorGUILayout.EndHorizontal();
+        //header.window.Repaint();
         return rect;
     }
 
     static Rect DrawDivider(Rect rect)
     {
         Rect dividerRect = new Rect(rect);
-        dividerRect.x = rect.xMax + 8;
+        dividerRect.x = rect.xMax + 7;
         dividerRect.width = 1f;
         EditorGUI.DrawRect(dividerRect, Color.black);
         return dividerRect;
@@ -125,9 +100,9 @@ public class MyGUILayout {
         if (Event.current.type == EventType.MouseDrag)
         { 
             width = Event.current.mousePosition.x - buttonRect.x - 8;
-            if (width < -15)
+            if (width < -7)
             {
-                width = -15f;
+                width = -7f;
             }
         }
         return width;

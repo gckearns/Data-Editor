@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEditor;
 
 public class GUIHeader
 {
@@ -10,8 +11,9 @@ public class GUIHeader
     public string[] texts { get; set; }
     public System.Action<int> action { get; set; }
     public GUIStyle style { get; set; }
+    public EditorWindow window { get; set; }
 
-    public GUIHeader(string[] texts, GUIStyle style, float[] widths, System.Action<int> buttonAction)
+    public GUIHeader(string[] texts, GUIStyle style, float[] widths, System.Action<int> buttonAction, EditorWindow window)
     {
         this.texts = texts;
         headerRects = new Rect[widths.Length];
@@ -24,6 +26,7 @@ public class GUIHeader
             headerRects[i].width = widths[i];
             options[i] = new GUILayoutOptions(GUILayout.Width(widths[i]));
         }
+        this.window = window;
     }
 
     public bool[] isResizing { get; set; }

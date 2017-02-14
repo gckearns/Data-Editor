@@ -14,7 +14,10 @@ public class GUITable {
     private bool downDelayed = false;
     private bool upPressed = false;
     private bool upDelayed = false;
+    private int sortedBy = -1;
+    private bool isReverseSorted = false;
 
+    public GUIHeader header { get; set; }
     public GUIRow[] rows { get; set; }
     public int focusedRow { get; set; }
     public bool isFocused { get; set; }
@@ -66,17 +69,19 @@ public class GUITable {
 
     public void ShowTable()
     {
+        //MyGUILayout.Header(header);
+        //header.window.Repaint();
         isFocused = false;
         ClickedRowIndex = -1;
         for (int i = 0; i < rows.Length; i++)
         {
             EditorGUI.BeginChangeCheck();
-            MyGUILayout.ShowRow(rows[i]);
+            MyGUILayout.Row(rows[i]);
             if (EditorGUI.EndChangeCheck())
             {
                 ClickedRowIndex = i;
             }
-            if (GUI.GetNameOfFocusedControl().Contains("row" + rows[i].id))
+            if (rows[i].hasFocus)
             {
                 focusedRow = i;
 
@@ -102,7 +107,7 @@ public class GUITable {
         {
             ShiftStartIndex = focusedRow;
         }
-        else if (!shiftHeld)
+        else if (!shiftHeld && ((isFocused && !cEvent.alt && ((cEvent.keyCode == KeyCode.DownArrow) || (cEvent.keyCode == KeyCode.UpArrow))) || (RowClicked)))
         {
             ShiftStartIndex = -1;
         }
@@ -229,7 +234,7 @@ public class GUITable {
     {
         for (int i = 0; i < rows.Length; i++)
         {
-            rows[i].value = (((rowEndIndex >= shiftStartIndex) && (i >= shiftStartIndex) && (i <= rowEndIndex)) 
+            rows[i].isOn = (((rowEndIndex >= shiftStartIndex) && (i >= shiftStartIndex) && (i <= rowEndIndex)) 
                 || ((rowEndIndex < shiftStartIndex) && (i <= shiftStartIndex) && (i >= rowEndIndex))) ? true : false;
         }
     }
@@ -239,42 +244,29 @@ public class GUITable {
     {
         if (ClickedRowIndex != -1 && Event.current.shift)
         {
-            for (int i = 0; i < rows.Length; i++)
-            {
-                if (ShiftStartIndex < ClickedRowIndex)
-                {
-                    rows[i].value = (i <= ClickedRowIndex) ? true : false;
-                }
-                else
-                {
-                    rows[i].value = (i >= ClickedRowIndex) ? true : false;
-                }
-            }
+            ShiftSelectRange(ClickedRowIndex);
         }
         else if (ClickedRowIndex != -1 && !Event.current.control && !Event.current.shift)
         {
             for (int i = 0; i < rows.Length; i++)
             {
-                rows[i].value = (ClickedRowIndex == i) ? rows[i].value : false;
+                rows[i].isOn = (ClickedRowIndex == i) ? rows[i].isOn : false;
             }
-            focusedRow = ClickedRowIndex;
             isFocused = true;
-            Focus();
-            //rows[ClickedRow].value = true;
         }
     }
 
     void Focus()
     {
         GUIRow row = rows[focusedRow];
-        GUI.FocusControl(("row" + row.id + 0));
+        GUI.FocusControl(row.controlName + "_" + 0);
     }
 
     void DeselectAll()
     {
         for (int i = 0; i < rows.Length; i++)
         {
-            rows[i].value = false;
+            rows[i].isOn = false;
         }
     }
 
@@ -282,7 +274,36 @@ public class GUITable {
     {
         for (int i = 0; i < rows.Length; i++)
         {
-            rows[i].value = (i == index) ? true : false;
+            rows[i].isOn = (i == index) ? true : false;
         }
+    }
+
+    public void SortByColumn(int index)
+    {
+        if (index != sortedBy || (index == sortedBy && isReverseSorted))
+        {
+            Array.Sort(rows, delegate (GUIRow x, GUIRow y)
+            {
+                int result = x.cells[index].text.CompareTo(y.cells[index].text);
+                if (result == 0 && index != 0)
+                {
+                    result = x.cells[0].text.CompareTo(y.cells[0].text);
+                }
+                if (result == 0 && index != 1)
+                {
+                    result = x.cells[1].text.CompareTo(y.cells[1].text);
+                }
+                return result;
+            });
+            isReverseSorted = false;
+            Debug.Log("Sorting by column index " + index);
+        }
+        else if (index == sortedBy && !isReverseSorted)
+        {
+            Array.Reverse(rows);
+            isReverseSorted = true;
+            Debug.Log("Reversing sort of column index " + index);
+        }
+        sortedBy = index;
     }
 }

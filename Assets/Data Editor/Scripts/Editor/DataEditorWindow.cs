@@ -53,17 +53,55 @@ namespace GameDataManager
         }
 
         GUITable table;
-
+        Vector2 scrollPos;
+        Rect scrollContentRect;
+        float scrollbar = 0.5f;
         private void OnGUI()
         {
             GUI.skin = Skin;
             tableCellStyle = new GUIStyle("TableCell");
-            TableHeader();
+            Rect windowRect = new Rect(new Vector2(position.width / 4, position.height / 4), new Vector2(position.width / 2, position.height / 2));
+            GUI.BeginGroup(windowRect, (GUIStyle)"TableRow");
+            //TableHeader();
             if (table == null)
             {
                 table = GetTable();
             }
+            MyGUILayout.Header(table.header);
+            Repaint();
+            Rect scrollRect = new Rect(windowRect);
+            scrollRect.y = 0;
+            scrollRect.width = 18f;
+            scrollRect.x = windowRect.width - 18f;
+            scrollContentRect = new Rect(Vector2.zero, windowRect.size);
+            scrollContentRect.height = table.rows.Length * 22;
+
+            Rect scrollViewRect = new Rect(Vector2.zero, windowRect.size);
+            scrollViewRect.y += 18;
+            scrollViewRect.height -= 18;
+            float contentHeight = scrollContentRect.height - 33;
+            float pctVisible = scrollViewRect.height / (contentHeight);
+
+            scrollContentRect.y -= scrollbar + 20;
+            GUI.BeginGroup(scrollViewRect,(GUIStyle)"TEST");
+            GUI.BeginGroup(scrollContentRect);
             table.ShowTable();
+            GUI.EndGroup();
+            GUI.EndGroup();
+
+            if (contentHeight > scrollViewRect.height)
+            {
+                scrollbar = GUI.VerticalScrollbar(scrollRect, scrollbar, pctVisible * contentHeight, 0f, contentHeight);
+                //Debug.Log(scrollbar);
+            }
+            else
+            {
+                scrollbar = 0f;
+            }
+
+            
+            //GUI.EndScrollView();
+            GUI.EndGroup();
         }
 
         private GUIHeader header;
@@ -73,7 +111,7 @@ namespace GameDataManager
             GUIStyle headerStyle = new GUIStyle("TableHeader");
             if (header == null)
             {
-                header = new GUIHeader(new string[] { "Name", "ID", "Unit Type" }, headerStyle, new float[] { 128f, 64f, 96f }, new System.Action<int> (ColumnClicked));
+                header = new GUIHeader(new string[] { "Name", "ID", "Unit Type" }, headerStyle, new float[] { 128f, 64f, 96f }, new System.Action<int> (ColumnClicked), this);
             }
             MyGUILayout.Header(header);
             Repaint();
@@ -82,26 +120,27 @@ namespace GameDataManager
         void ColumnClicked(int index)
         {
             Debug.Log("Clicked column " + index);
+            table.SortByColumn(index);
         }
 
         GUITable GetTable()
         {
             GUI.skin = Skin;
-            tableCellStyle = new GUIStyle("TableCell");
             GUITable table = new GUITable();
+            table.header = new GUIHeader(new string[] { "Name", "ID", "Unit Type" }, "TableHeader", new float[] { 128f, 64f, 96f }, new System.Action<int>(ColumnClicked), this);
             table.rows = new GUIRow[]
             {
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "one", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "two", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "three", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "four", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "five", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "six", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "seven", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "eight", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "nine", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "ten", tableCellStyle, header.options),
-                new GUIRow(false, new string[] { "House", "house", "Building" }, "eleven", tableCellStyle, header.options)
+                new GUIRow(false, new string[] { "HHouse", "house8", "Industry" }, "eight", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "IHouse", "house9", "Industry" }, "nine", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "JHouse", "house10", "Industry" }, "ten", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "AHouse", "house1", "Housing" }, "one", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "BHouse", "house2", "Housing" }, "two", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "EHouse", "house5", "Services" }, "five", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "FHouse", "house6", "Services" }, "six", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "CHouse", "house3", "Housing" }, "three", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "DHouse", "house4", "Services" }, "four", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "GHouse", "house7", "Services" }, "seven", "TableCell", "TableRow", table.header.options),
+                new GUIRow(false, new string[] { "KHouse", "house11", "Industry" }, "eleven", "TableCell", "TableRow", table.header.options)
             };
             return table;
         }
